@@ -76,7 +76,13 @@ async function login(req, res) {
     });
     logger.info("User logged in successfully", { email });
 
-    return res.status(200).json({ message: "Login successful", token });
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false, // true in prod
+      sameSite: "lax",
+    });
+
+    res.json({ message: "Login successful" });
   } catch (err) {
     return handleServerError(res, err, { operation: "Login", email });
   }
