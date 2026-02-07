@@ -13,6 +13,7 @@ app.use(cookieParser());
 
 const userRoutes = require("./routes/userRoutes");
 const newsRoutes = require("./routes/newsRoutes");
+const debugRoutes = require("./routes/debugRoutes");
 const connectDB = require("./config/db");
 
 app.use(express.json());
@@ -24,6 +25,7 @@ app.use(requestLogger);
 // Route mounting
 app.use("/users", userRoutes);
 app.use("/news", newsRoutes);
+app.use("/debug", debugRoutes);
 
 // Only start the server when this file is run directly, not when required by tests
 if (require.main === module) {

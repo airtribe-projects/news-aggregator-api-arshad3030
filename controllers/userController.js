@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const logger = require("../utils/logger");
+const profiler = require("../utils/profiler");
 const {
   handleServerError,
   handleDuplicateEmail,
@@ -14,6 +15,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key";
 
 // POST /users/signup
 async function signup(req, res) {
+  profiler.mark("signup_total");
   const { name, email, password, preferences } = req.body || {};
 
   if (!name || !email || !password) {
@@ -22,15 +24,20 @@ async function signup(req, res) {
 
   try {
     // Check if user already exists
+    profiler.mark("signup_findOne_existing");
     const existingUser = await User.findOne({ email });
+    profiler.measure("signup_findOne_existing");
     if (existingUser) {
       return handleDuplicateEmail(res);
     }
 
     // Hash password
+    profiler.mark("signup_bcrypt_hash");
     const hashedPassword = await bcrypt.hash(password, 10);
+    profiler.measure("signup_bcrypt_hash");
 
     // Create new user in MongoDB
+    profiler.mark("signup_user_save");
     const newUser = new User({
       username: name,
       email,
@@ -39,8 +46,10 @@ async function signup(req, res) {
     });
 
     await newUser.save();
+    profiler.measure("signup_user_save");
     logger.info("User registered successfully", { email, userId: newUser._id });
 
+    profiler.measure("signup_total");
     return res.status(201).json({ message: "User created successfully" });
   } catch (err) {
     if (err.code === 11000) {
@@ -52,6 +61,7 @@ async function signup(req, res) {
 
 // POST /users/login
 async function login(req, res) {
+  profiler.mark("login_total");
   const { email, password } = req.body || {};
 
   if (!email || !password) {
@@ -60,20 +70,26 @@ async function login(req, res) {
 
   try {
     // Find user in MongoDB
+    profiler.mark("login_findOne");
     const user = await User.findOne({ email: email.toLowerCase() });
+    profiler.measure("login_findOne");
 
     if (!user) {
       return handleInvalidCredentials(res);
     }
 
+    profiler.mark("login_bcrypt_compare");
     const isMatch = await bcrypt.compare(password, user.password);
+    profiler.measure("login_bcrypt_compare");
     if (!isMatch) {
       return handleInvalidCredentials(res);
     }
 
+    profiler.mark("login_jwt_sign");
     const token = jwt.sign({ email: user.email }, JWT_SECRET, {
       expiresIn: "1h",
     });
+    profiler.measure("login_jwt_sign");
     logger.info("User logged in successfully", { email });
 
     res.cookie("token", token, {
@@ -82,6 +98,7 @@ async function login(req, res) {
       sameSite: "lax",
     });
 
+    profiler.measure("login_total");
     res.json({ message: "Login successful" });
   } catch (err) {
     return handleServerError(res, err, { operation: "Login", email });
@@ -90,13 +107,17 @@ async function login(req, res) {
 
 // GET /users/preferences
 async function getPreferences(req, res) {
+  profiler.mark("getPreferences_total");
   try {
+    profiler.mark("getPreferences_findOne");
     const user = await User.findOne({ email: req.user.email });
+    profiler.measure("getPreferences_findOne");
 
     if (!user) {
       return handleUserNotFound(res);
     }
 
+    profiler.measure("getPreferences_total");
     return res.status(200).json({
       message: "Preferences retrieved successfully",
       preferences: user.preferences || [],
@@ -111,6 +132,7 @@ async function getPreferences(req, res) {
 
 // PUT /users/preferences
 async function updatePreferences(req, res) {
+  profiler.mark("updatePreferences_total");
   const { preferences } = req.body || {};
 
   if (!Array.isArray(preferences)) {
@@ -118,19 +140,24 @@ async function updatePreferences(req, res) {
   }
 
   try {
+    profiler.mark("updatePreferences_findOne");
     const user = await User.findOne({ email: req.user.email });
+    profiler.measure("updatePreferences_findOne");
 
     if (!user) {
       return handleUserNotFound(res);
     }
 
     user.preferences = preferences;
+    profiler.mark("updatePreferences_save");
     await user.save();
+    profiler.measure("updatePreferences_save");
     logger.info("User preferences updated", {
       email: req.user.email,
       preferences,
     });
 
+    profiler.measure("updatePreferences_total");
     return res.status(200).json({
       message: "Preferences updated successfully",
       preferences: user.preferences,
