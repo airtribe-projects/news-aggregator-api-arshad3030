@@ -170,9 +170,43 @@ async function updatePreferences(req, res) {
   }
 }
 
+// DELETE /users/account
+// User can only delete their own account
+async function deleteAccount(req, res) {
+  profiler.mark("deleteAccount_total");
+  try {
+    profiler.mark("deleteAccount_query");
+    const user = await User.findOneAndDelete({ email: req.user.email });
+    profiler.measure("deleteAccount_query");
+
+    if (!user) {
+      return handleUserNotFound(res);
+    }
+
+    logger.info("User deleted their account", {
+      email: req.user.email,
+      role: user.role,
+    });
+
+    // Clear token cookie
+    res.clearCookie("token");
+
+    profiler.measure("deleteAccount_total");
+    return res.status(200).json({
+      message: "Your account has been deleted successfully",
+    });
+  } catch (err) {
+    return handleServerError(res, err, {
+      operation: "Delete account",
+      email: req.user.email,
+    });
+  }
+}
+
 module.exports = {
   signup,
   login,
   getPreferences,
   updatePreferences,
+  deleteAccount,
 };
