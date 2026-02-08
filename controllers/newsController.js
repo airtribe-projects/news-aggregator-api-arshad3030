@@ -1,14 +1,17 @@
 const axios = require("axios");
 const User = require("../models/User");
 const logger = require("../utils/logger");
+const config = require("../config/default.json");
+const STATUS_CODES = require("../config/statusCodes");
 const {
   handleServerError,
   handleUserNotFound,
 } = require("../utils/errorHandler");
 
-// Cache configuration
+// Cache configuration from default.json
 const newsCache = new Map();
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes in milliseconds
+const CACHE_TTL = config.cache.ttl; // 10 minutes in milliseconds
+const NEWS_API_URL = config.news.apiUrl;
 
 // GET /news
 // Protected route: uses JWT (see authMiddleware) and the logged-in user's preferences.
@@ -35,22 +38,21 @@ async function getNews(req, res) {
     const cached = newsCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       logger.debug("Cache HIT", { cacheKey, articleCount: cached.data.length });
-      return res.status(200).json({ news: cached.data });
+      return res.status(STATUS_CODES.OK).json({ news: cached.data });
     }
     logger.debug("Cache MISS", { cacheKey });
 
     // Build query for NewsAPI based on preferences. We'll use the "everything" endpoint
     // and OR the categories together so that any matching article is returned.
     const NEWS_API_KEY = process.env.NEWS_API_KEY;
-    const NEWS_API_URL = "https://newsapi.org/v2/everything";
 
     // If no preferences are set, default to a generic query.
     const query = preferences.length > 0 ? preferences.join(" OR ") : "news";
 
     const params = {
       q: query,
-      language: "en",
-      sortBy: "publishedAt",
+      language: config.news.language,
+      sortBy: config.news.sortBy,
       apiKey: NEWS_API_KEY,
     };
 
@@ -71,7 +73,7 @@ async function getNews(req, res) {
         articleCount: articles.length,
       });
 
-      return res.status(200).json({
+      return res.status(STATUS_CODES.OK).json({
         message: "News fetched successfully",
         news: articles,
       });
@@ -79,7 +81,7 @@ async function getNews(req, res) {
       // For this guided project, fail gracefully but still satisfy tests by
       // returning a 200 with an empty list if the external API fails (e.g. no key).
       logger.warn("Error fetching news from NewsAPI", { error: err.message });
-      return res.status(200).json({ news: [] });
+      return res.status(STATUS_CODES.OK).json({ news: [] });
     }
   } catch (err) {
     return handleServerError(res, err, {

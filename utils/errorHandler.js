@@ -4,6 +4,7 @@
  */
 
 const logger = require("./logger");
+const STATUS_CODES = require("../config/statusCodes");
 
 /**
  * Handle generic server errors with logging
@@ -14,7 +15,7 @@ function handleServerError(res, err, context = {}) {
     email: context.email,
     error: err.message,
   });
-  return res.status(500).json({
+  return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
     error: "Internal server error",
     message: "Something went wrong. Please try again later.",
   });
@@ -25,7 +26,7 @@ function handleServerError(res, err, context = {}) {
  * Consistent 404 response for missing users
  */
 function handleUserNotFound(res) {
-  return res.status(404).json({
+  return res.status(STATUS_CODES.NOT_FOUND).json({
     error: "User not found",
     message: "The requested user does not exist.",
   });
@@ -36,7 +37,7 @@ function handleUserNotFound(res) {
  * Used during signup when email already exists
  */
 function handleDuplicateEmail(res) {
-  return res.status(400).json({
+  return res.status(STATUS_CODES.BAD_REQUEST).json({
     error: "User with this email already exists",
     message: "Please use a different email address or try logging in.",
   });
@@ -47,7 +48,7 @@ function handleDuplicateEmail(res) {
  * Used during login for authentication failures
  */
 function handleInvalidCredentials(res) {
-  return res.status(401).json({
+  return res.status(STATUS_CODES.UNAUTHORIZED).json({
     error: "Invalid credentials",
     message: "Email or password is incorrect. Please try again.",
   });
@@ -58,7 +59,7 @@ function handleInvalidCredentials(res) {
  * Generic 400 response for missing or invalid request data
  */
 function handleValidationError(res, message) {
-  return res.status(400).json({
+  return res.status(STATUS_CODES.BAD_REQUEST).json({
     error: "Validation error",
     message: message,
   });

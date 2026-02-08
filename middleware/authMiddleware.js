@@ -1,7 +1,8 @@
 const jwt = require("jsonwebtoken");
 const logger = require("../utils/logger");
+const STATUS_CODES = require("../config/statusCodes");
 
-const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization || "";
@@ -11,7 +12,7 @@ function authMiddleware(req, res, next) {
       path: req.path,
       reason: "Missing or malformed header",
     });
-    return res.status(401).json({
+    return res.status(STATUS_CODES.UNAUTHORIZED).json({
       error: "Authorization header missing or malformed",
       message:
         "Please provide a valid Bearer token in the Authorization header.",
@@ -27,7 +28,7 @@ function authMiddleware(req, res, next) {
     return next();
   } catch (err) {
     logger.warn("Token verification failed", { error: err.name });
-    return res.status(401).json({
+    return res.status(STATUS_CODES.UNAUTHORIZED).json({
       error: "Invalid or expired token",
       message: "Please log in again to get a fresh token.",
     });

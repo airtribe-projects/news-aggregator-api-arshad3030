@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const logger = require("../utils/logger");
+const STATUS_CODES = require("../config/statusCodes");
 const {
   handleServerError,
   handleDuplicateEmail,
@@ -10,7 +11,7 @@ const {
   handleValidationError,
 } = require("../utils/errorHandler");
 
-const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // POST /users/signup
 async function signup(req, res) {
@@ -41,7 +42,9 @@ async function signup(req, res) {
     await newUser.save();
     logger.info("User registered successfully", { email, userId: newUser._id });
 
-    return res.status(201).json({ message: "User created successfully" });
+    return res
+      .status(STATUS_CODES.CREATED)
+      .json({ message: "User created successfully" });
   } catch (err) {
     if (err.code === 11000) {
       return handleDuplicateEmail(res);
@@ -76,7 +79,9 @@ async function login(req, res) {
     });
     logger.info("User logged in successfully", { email });
 
-    return res.status(200).json({ message: "Login successful", token });
+    return res
+      .status(STATUS_CODES.OK)
+      .json({ message: "Login successful", token });
   } catch (err) {
     return handleServerError(res, err, { operation: "Login", email });
   }
@@ -91,7 +96,7 @@ async function getPreferences(req, res) {
       return handleUserNotFound(res);
     }
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.OK).json({
       message: "Preferences retrieved successfully",
       preferences: user.preferences || [],
     });
@@ -125,7 +130,7 @@ async function updatePreferences(req, res) {
       preferences,
     });
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.OK).json({
       message: "Preferences updated successfully",
       preferences: user.preferences,
     });

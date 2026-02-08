@@ -24,7 +24,7 @@ tap.test("POST /users/signup", async (t) => {
   await User.deleteOne({ email: mockUser.email });
 
   const response = await server.post("/users/signup").send(mockUser);
-  t.equal(response.status, 200);
+  t.equal(response.status, 201);
   t.end();
 });
 
@@ -83,6 +83,7 @@ tap.test("PUT /users/preferences", async (t) => {
       preferences: ["movies", "comics", "games"],
     });
   t.equal(response.status, 200);
+  t.end();
 });
 
 tap.test("Check PUT /users/preferences", async (t) => {
