@@ -6,12 +6,11 @@ const logger = require("../utils/logger");
 dotenv.config();
 
 async function connectDB() {
-  let uri = process.env.DB_CONNECTION;
+  let uri = process.env.DB_CONNECTION || logger.warn("DB_CONNECTION is not set; skipping MongoDB connection.") || null;
   const dbName = process.env.DB_NAME;
 
   if (!uri) {
-    logger.warn("DB_CONNECTION is not set; skipping MongoDB connection.");
-    return;
+    return Promise.resolve();
   }
 
   // Remove appName from URI if present (it can cause issues)
@@ -23,8 +22,10 @@ async function connectDB() {
       dbName,
     });
     logger.info(`MongoDB connected${dbName ? ` to database "${dbName}"` : ""}`);
+    return Promise.resolve();
   } catch (err) {
     logger.error("MongoDB connection error", { message: err.message });
+    return Promise.reject(err);
   }
 }
 

@@ -6,7 +6,9 @@
   "news": {
     "apiUrl": "https://newsapi.org/v2/everything",
     "language": "en",
-    "sortBy": "publishedAt"
+    "sortBy": "publishedAt",
+    "defaultQuery": "news",
+    "description": "Default query when no user preferences are set"
   },
   "auth": {
     "jwtExpiration": "1h",

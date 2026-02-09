@@ -26,7 +26,11 @@ app.use("/news", newsRoutes);
 // Only start the server when this file is run directly, not when required by tests
 if (require.main === module) {
   // Connect to MongoDB
-  connectDB();
+  connectDB()
+    .catch((err) => {
+      logger.error("Failed to connect to MongoDB", { error: err.message });
+      process.exit(1);
+    });
 
   app.listen(port, (err) => {
     if (err) {

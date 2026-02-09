@@ -41,7 +41,7 @@ function requestLogger(req, res, next) {
       duration: `${duration}ms`,
       size: `${size}B`,
       userAgent: req.get("user-agent"),
-      ip: req.ip || req.connection.remoteAddress,
+      ip: req.ip || req.socket.remoteAddress,
       email: req.user?.email || "anonymous",
     };
 
