@@ -1,0 +1,21 @@
+{
+  "cache": {
+    "ttl": 600000,
+    "description": "Cache TTL in milliseconds (10 minutes)"
+  },
+  "news": {
+    "apiUrl": "https://newsapi.org/v2/everything",
+    "language": "en",
+    "sortBy": "publishedAt",
+    "defaultQuery": "news",
+    "description": "Default query when no user preferences are set"
+  },
+  "auth": {
+    "jwtExpiration": "1h",
+    "description": "JWT token expiration time"
+  },
+  "bcrypt": {
+    "saltRounds": 10,
+    "description": "Number of salt rounds for bcrypt password hashing"
+  }
+}
